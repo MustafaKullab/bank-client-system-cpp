@@ -6,8 +6,8 @@ using namespace std;
 
 const string FileName = "Client.txt";
 
-void ShowMainMenu();
-
+void ShowMainMenue();
+void ShowTransactionsScreen();
 struct stClient
 {
     string AccountNumber;
@@ -18,20 +18,29 @@ struct stClient
     double AccountBalance;
 };
 
-enum enMainMenuOptions
+enum enMainMenueOptions
 {
     eShowClients = 1,
     eAddClient = 2,
     eDeleteClient = 3,
     eUpdateClient = 4,
     eFindClient = 5,
-    eExitClient = 6
+    eTransactions = 6,
+    eExitClient = 7
 };
 
-short ReadMainMenuOption()
+enum enTransactionOptions
+{
+    eDeposit = 1,
+    eWithDraw = 2,
+    eTotalBalance = 3,
+    eMainMenue = 4
+};
+
+short ReadMainMenueOption()
 {
     short Option;
-    cout << "Choose what do you want to do? [1 to 6]? ";
+    cout << "Choose what do you want to do? [1 to 7]? ";
     cin >> Option;
     return Option;
 }
@@ -135,11 +144,11 @@ void ShowClientsScreen()
     cout << "_____________________________________________\n\n";
 }
 
-void GoToMainMenuScreen()
+void GoToMainMenueScreen()
 {
-    cout << "\nPress any key to go back to Main Menu...\n";
+    cout << "\nPress any key to go back to Main Menue...\n";
     system("pause>0");
-    ShowMainMenu();
+    ShowMainMenue();
 }
 
 bool ClientIsExistByAccountNumber(string AccountNumber, vector<stClient> vClients)
@@ -256,9 +265,9 @@ void AddNewClients()
 
 void ShowAddClientScreen()
 {
-    cout << "----------------------------------------------------\n";
+    cout << "==========================================================\n";
     cout << "\t\tAdd New Clients Screen\n";
-    cout << "----------------------------------------------------\n";
+    cout << "==========================================================\n";
 
     AddNewClients();
 }
@@ -341,9 +350,9 @@ void DeleteClient(string AccountNumber, vector<stClient> &vClients)
 
 void ShowDeleteClientScreen()
 {
-    cout << "----------------------------------------------------\n";
+    cout << "==========================================================\n";
     cout << "\t\tDelete Client Screen\n";
-    cout << "----------------------------------------------------\n";
+    cout << "==========================================================\n";
 
     vector<stClient> vClients = LoadClientsFromFile();
     string AccountNumber = ReadAccountNumber();
@@ -412,9 +421,9 @@ void UpdateClient(string AccountNumber, vector<stClient> &vClients)
 
 void ShowUpdateClientScreen()
 {
-    cout << "----------------------------------------------------\n";
+    cout << "==========================================================\n";
     cout << "\t\tUpdate Client Screen\n";
-    cout << "----------------------------------------------------\n";
+    cout << "==========================================================\n";
 
     vector<stClient> vClients = LoadClientsFromFile();
     string AccountNumber = ReadAccountNumber();
@@ -443,9 +452,9 @@ void FindClient(string AccountNumber, vector<stClient> vClients)
 void ShowFindClientScreen()
 {
 
-    cout << "----------------------------------------------------\n";
+    cout << "==========================================================\n";
     cout << "\t\tFind Client Screen\n";
-    cout << "----------------------------------------------------\n";
+    cout << "==========================================================\n";
 
     vector<stClient> vClients = LoadClientsFromFile();
     string AccountNumber = ReadAccountNumber();
@@ -454,65 +463,261 @@ void ShowFindClientScreen()
 
 void ShowEndProgramScreen()
 {
-    cout << "----------------------------------------------------\n";
+    cout << "==========================================================\n";
     cout << "\t\tProgram Ends :-)\n";
-    cout << "----------------------------------------------------\n";
+    cout << "==========================================================\n";
 }
 
-void PerfoemMainMenuOption(enMainMenuOptions MainMenuOption)
+short ReadTransactionOption()
 {
-    switch (MainMenuOption)
+    short Option;
+    cout << "Choose what do you want to do? [1 to 4]? ";
+    cin >> Option;
+    return Option;
+}
+
+bool DepositBalanceToClientByAccountNumber(string AccountNumber, vector<stClient> &vClients, double Amount)
+{
+    char Answer = 'n';
+
+    cout << "Are you sure you want perform this transaction? Y/N ? ";
+    cin >> Answer;
+
+    if (Answer == 'y' || Answer == 'Y')
     {
-    case enMainMenuOptions::eShowClients:
+        for (stClient &c : vClients)
+        {
+            if (c.AccountNumber == AccountNumber)
+            {
+                c.AccountBalance += Amount;
+                SaveClientsInFile(vClients);
+                cout << "\nDone Successfully. New balance is: " << c.AccountBalance << endl;
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+void ShowDepositScreen()
+{
+    cout << "============================================\n";
+    cout << "\t\tDeposit Screen \n";
+    cout << "============================================\n";
+
+    stClient Client;
+    vector<stClient> vClients = LoadClientsFromFile();
+    string AccountNumber = ReadAccountNumber();
+
+    while (!FindClientByAccountNumber(AccountNumber, vClients, Client))
+    {
+        cout << "Client with [" << AccountNumber << "] does not exist.\n";
+        AccountNumber = ReadAccountNumber();
+    }
+
+    PrintClientCard(Client);
+
+    double DepositAmount;
+    cout << "Please enter deposit amount? ";
+    cin >> DepositAmount;
+
+    while (DepositAmount <= 0)
+    {
+
+        cout << "Amount is not valid, Please enter amount grather than 0? ";
+        cin >> DepositAmount;
+    }
+
+    DepositBalanceToClientByAccountNumber(AccountNumber, vClients, DepositAmount);
+}
+
+void ShowWithdrawScreen()
+{
+    cout << "============================================\n";
+    cout << "\t\tWithdraw Screen \n";
+    cout << "============================================\n";
+
+    stClient Client;
+    vector<stClient> vClients = LoadClientsFromFile();
+    string AccountNumber = ReadAccountNumber();
+
+    while (!FindClientByAccountNumber(AccountNumber, vClients, Client))
+    {
+        cout << "Client with [" << AccountNumber << "] does not exist.\n";
+        AccountNumber = ReadAccountNumber();
+    }
+
+    PrintClientCard(Client);
+
+    double WithdrawAmount;
+    cout << "Please enter withdraw amount? ";
+    cin >> WithdrawAmount;
+
+    while (WithdrawAmount <= 0 || WithdrawAmount > Client.AccountBalance)
+    {
+        cout << "Amount is not valid, Please enter amount grather than 0 And less than balance? ";
+        cin >> WithdrawAmount;
+    }
+
+    DepositBalanceToClientByAccountNumber(AccountNumber, vClients, WithdrawAmount * -1);
+}
+
+void PrintClientBalanceLine(stClient Client)
+{
+    cout << "| " << setw(25) << left << Client.AccountNumber;
+    cout << "| " << setw(60) << left << Client.Name;
+    cout << "| " << setw(25) << left << Client.AccountBalance;
+}
+
+void BackToTransactionMenue()
+{
+    cout << "\nPress any key to go back to Transaction Menue...\n";
+    system("pause>0");
+    ShowTransactionsScreen();
+}
+
+double CalculateTotalBalance(vector<stClient> vClients)
+{
+
+    double TotalBalance = 0;
+    for (stClient Client : vClients)
+    {
+        TotalBalance += Client.AccountBalance;
+    }
+
+    return TotalBalance;
+}
+
+void ShowTotalBalanceScreen()
+{
+    vector<stClient> vClients = LoadClientsFromFile();
+
+    cout << "\t\t\t\t\t\t\tBalance List (" << vClients.size() << ") Client(s)\n";
+    cout << "_________________________________________________________________________";
+    cout << "______________________________________________________________\n\n";
+    cout << "| " << setw(25) << left << "Account Number";
+    cout << "| " << setw(60) << left << "Client Name";
+    cout << "| " << setw(25) << left << "Balance";
+    cout << "\n_________________________________________________________________________";
+    cout << "______________________________________________________________\n\n";
+
+    for (stClient Client : vClients)
+    {
+        PrintClientBalanceLine(Client);
+        cout << endl;
+    }
+
+    cout << "\n_________________________________________________________________________";
+    cout << "______________________________________________________________\n\n";
+
+    double TotalBalance = CalculateTotalBalance(vClients);
+
+    cout << "\t\t\t\t\t\t\t\t\t Total Balance = " << TotalBalance << endl
+         << endl;
+}
+
+void PerformTransactionsOption(enTransactionOptions TransactionsOption)
+{
+    switch (TransactionsOption)
+    {
+    case enTransactionOptions::eDeposit:
+        system("cls");
+        ShowDepositScreen();
+        BackToTransactionMenue();
+        break;
+    case enTransactionOptions::eWithDraw:
+        system("cls");
+        ShowWithdrawScreen();
+        BackToTransactionMenue();
+        break;
+    case enTransactionOptions::eTotalBalance:
+        system("cls");
+        ShowTotalBalanceScreen();
+        BackToTransactionMenue();
+        break;
+    case enTransactionOptions::eMainMenue:
+        ShowMainMenue();
+        break;
+    default:
+        cout << "Invalid option, please choose from 1 to 4.\n\n";
+        ShowTransactionsScreen();
+        break;
+    }
+}
+
+void ShowTransactionsScreen()
+{
+    cout << "==========================================================\n";
+    cout << "\t\tTransactions Menue Screen\n";
+    cout << "==========================================================\n";
+    cout << "\t\t[1] Deposit.\n";
+    cout << "\t\t[2] Withdraw.\n";
+    cout << "\t\t[3] Total Balances.\n";
+    cout << "\t\t[4] Main Menue.\n";
+    cout << "==========================================================\n";
+    PerformTransactionsOption((enTransactionOptions)ReadTransactionOption());
+}
+
+void PerfoemMainMenueOption(enMainMenueOptions MainMenueOption)
+{
+    switch (MainMenueOption)
+    {
+    case enMainMenueOptions::eShowClients:
         system("cls");
         ShowClientsScreen();
-        GoToMainMenuScreen();
+        GoToMainMenueScreen();
         break;
-    case enMainMenuOptions::eAddClient:
+    case enMainMenueOptions::eAddClient:
         system("cls");
         ShowAddClientScreen();
-        GoToMainMenuScreen();
+        GoToMainMenueScreen();
         break;
-    case enMainMenuOptions::eDeleteClient:
+    case enMainMenueOptions::eDeleteClient:
         system("cls");
         ShowDeleteClientScreen();
-        GoToMainMenuScreen();
+        GoToMainMenueScreen();
         break;
-    case enMainMenuOptions::eUpdateClient:
+    case enMainMenueOptions::eUpdateClient:
         system("cls");
         ShowUpdateClientScreen();
-        GoToMainMenuScreen();
+        GoToMainMenueScreen();
         break;
-    case enMainMenuOptions::eFindClient:
+    case enMainMenueOptions::eFindClient:
         system("cls");
         ShowFindClientScreen();
-        GoToMainMenuScreen();
+        GoToMainMenueScreen();
         break;
-    case enMainMenuOptions::eExitClient:
+    case enMainMenueOptions::eTransactions:
+        system("cls");
+        ShowTransactionsScreen();
+        break;
+    case enMainMenueOptions::eExitClient:
         system("cls");
         ShowEndProgramScreen();
         break;
     }
 }
 
-void ShowMainMenu()
+void ShowMainMenue()
 {
 
     cout << "================================================================\n";
-    cout << "\t\t\t Main Menu Screen\n";
+    cout << "\t\t\t Main Menue Screen\n";
     cout << "================================================================\n";
     cout << "\t\t [1] Show Client List.\n";
     cout << "\t\t [2] Add New Client.\n";
     cout << "\t\t [3] Delete Client.\n";
     cout << "\t\t [4] Update Client Info.\n";
     cout << "\t\t [5] Find Client.\n";
-    cout << "\t\t [6] Exit.\n";
+    cout << "\t\t [6] Transactions.\n";
+    cout << "\t\t [7] Exit.\n";
     cout << "================================================================\n";
-    PerfoemMainMenuOption((enMainMenuOptions)ReadMainMenuOption());
+    PerfoemMainMenueOption((enMainMenueOptions)ReadMainMenueOption());
 }
 
 int main()
 {
 
-    ShowMainMenu();
+    ShowMainMenue();
 }
